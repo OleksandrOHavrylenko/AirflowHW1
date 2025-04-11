@@ -10,10 +10,17 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.http.sensors.http import HttpSensor
 from airflow.providers.http.operators.http import SimpleHttpOperator
 
+cities = {
+    "Lviv" : {
+        "lat" : 49.842957,
+        "lon" : 24.031111
+    }
+}
+
 def _process_weather(ti):
     info = ti.xcom_pull("extract_data")
-    timestamp = info["dt"]
-    temp = info["main"]["temp"]
+    timestamp = info["data"]["dt"]
+    temp = info["data"]["temp"]
     return timestamp, temp
 
 def python_method(execution_date: pendulum.DateTime):
@@ -23,10 +30,10 @@ def python_method(execution_date: pendulum.DateTime):
     print("Done")
 
 with DAG(
-    dag_id="weather_dag4",
-    start_date=datetime(2025, 3, 5),
+    dag_id="weather_dag",
+    start_date=datetime(2025, 4, 12),
     schedule_interval="@daily",
-    catchup=True,
+    catchup=False,
 ) as dag:
     db_create = PostgresOperator(
         task_id="create_table_postgres",
@@ -41,15 +48,17 @@ with DAG(
     check_api = HttpSensor(
         task_id="check_api",
         http_conn_id="http_weather_conn",
-        endpoint="data/2.5/weather",
-        request_params={"appid": Variable.get("WEATHER_API_KEY"), "q":"Lviv"}
+        endpoint="data/3.0/onecall/timemachine",
+        request_params={"appid": Variable.get("WEATHER_API_KEY"), "lat": { cities["Lviv"]["lat"] },
+                        "lon": { cities["Lviv"]["lon"] } , "dt": "{{ execution_date.int_timestamp }}"}
     )
 
     extract_data = SimpleHttpOperator(
         task_id="extract_data",
         http_conn_id="http_weather_conn",
-        endpoint="data/2.5/weather",
-        data={"appid": Variable.get("WEATHER_API_KEY"), "q": "Lviv"},
+        endpoint="data/3.0/onecall/timemachine",
+        data={"appid": Variable.get("WEATHER_API_KEY"),  "lat": { cities["Lviv"]["lat"] },
+                        "lon": { cities["Lviv"]["lon"] } , "dt": "{{ execution_date.int_timestamp }}"},
         method="GET",
         response_filter=lambda x: json.loads(x.text),
         log_response=True
