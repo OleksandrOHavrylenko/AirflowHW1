@@ -19,8 +19,8 @@ cities = {
 
 def _process_weather(ti):
     info = ti.xcom_pull("extract_data")
-    timestamp = info["data"]["dt"]
-    temp = info["data"]["temp"]
+    timestamp = info["data"][0]["dt"]
+    temp = info["data"][0]["temp"]
     return timestamp, temp
 
 def python_method(execution_date: pendulum.DateTime):
@@ -31,7 +31,7 @@ def python_method(execution_date: pendulum.DateTime):
 
 with DAG(
     dag_id="weather_dag",
-    start_date=datetime(2025, 4, 12),
+    start_date=datetime(2025, 4, 11),
     schedule_interval="@daily",
     catchup=False,
 ) as dag:
