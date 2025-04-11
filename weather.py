@@ -23,12 +23,6 @@ def _process_weather(ti):
     temp = info["data"][0]["temp"]
     return timestamp, temp
 
-def python_method(execution_date: pendulum.DateTime):
-    # print("Running execution_date = ", kwargs['execution_date'])
-    print(f"execution_date from task: {execution_date}")
-    print(f"execution_date from task: {execution_date.int_timestamp}")
-    print("Done")
-
 with DAG(
     dag_id="weather_dag",
     start_date=datetime(2025, 4, 11),
@@ -79,10 +73,4 @@ with DAG(
             """,
         )
     
-    doit = PythonOperator(
-        task_id='doit',
-        provide_context=True,
-        python_callable=python_method
-    )
-
-    db_create >> check_api >> extract_data >> process_weather_data >> inject_data >> doit
+    db_create >> check_api >> extract_data >> process_weather_data >> inject_data
