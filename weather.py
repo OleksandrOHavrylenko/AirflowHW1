@@ -21,7 +21,10 @@ def _process_weather(ti):
     info = ti.xcom_pull("extract_data")
     timestamp = info["data"][0]["dt"]
     temp = info["data"][0]["temp"]
-    return timestamp, temp
+    humidity = info["data"][0]["humidity"]
+    cloudiness = info["data"][0]["clouds"]
+    wind_speed = info["data"][0]["wind_speed"]
+    return (timestamp, temp, humidity, cloudiness, wind_speed)
 
 with DAG(
     dag_id="weather_dag",
@@ -33,9 +36,13 @@ with DAG(
         task_id="create_table_postgres",
         postgres_conn_id="wather_conn",
         sql="""
-            CREATE TABLE IF NOT EXISTS measures (
+            CREATE TABLE IF NOT EXISTS measures2 (
             timestamp TIMESTAMP,
-            temp FLOAT);
+            temp FLOAT,
+            humidity FLOAT,
+            cloudiness FLOAT,
+            wind_speed FLOAT, 
+            city varchar(100));
             """,
     )
 
@@ -67,9 +74,13 @@ with DAG(
         task_id="inject_data",
         postgres_conn_id="wather_conn",
         sql="""
-            INSERT INTO measures (timestamp, temp) VALUES
+            INSERT INTO measures2 (timestamp, temp, humidity, cloudiness, wind_speed, city) VALUES
             (to_timestamp({{ti.xcom_pull(task_ids='process_weather_data')[0]}}),
-            {{ti.xcom_pull(task_ids='process_weather_data')[1]}});
+            {{ti.xcom_pull(task_ids='process_weather_data')[1]}}, 
+            {{ti.xcom_pull(task_ids='process_weather_data')[2]}},
+            {{ti.xcom_pull(task_ids='process_weather_data')[3]}},
+            {{ti.xcom_pull(task_ids='process_weather_data')[4]}},
+            'Lviv');
             """,
         )
     
