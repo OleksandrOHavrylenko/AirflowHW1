@@ -1,7 +1,5 @@
 from datetime import datetime
-import logging
 import json
-import pendulum
 from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator
