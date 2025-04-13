@@ -11,10 +11,26 @@ from airflow.providers.http.sensors.http import HttpSensor
 from airflow.providers.http.operators.http import SimpleHttpOperator
 
 cities = {
-    "Lviv" : {
+    "Lviv": {
         "lat": 49.842957,
         "lon": 24.031111
-    }
+        },
+    "Kyiv": {
+        "lat": 50.450001,
+        "lon": 30.523333
+        },
+    "Kharkiv": {
+        "lat": 50.001560,
+        "lon": 36.231537
+        },
+    "Odesa": {
+        "lat": 46.482952,
+        "lon": 30.712481
+        },
+    "Zhmerynka": {
+        "lat": 49.03705,
+        "lon": 28.11201
+        }             
 }
 
 def _process_weather(ti):
