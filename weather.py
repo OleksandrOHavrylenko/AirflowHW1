@@ -12,8 +12,8 @@ from airflow.providers.http.operators.http import SimpleHttpOperator
 
 cities = {
     "Lviv" : {
-        "lat" : 49.842957,
-        "lon" : 24.031111
+        "lat": 49.842957,
+        "lon": 24.031111
     }
 }
 
@@ -24,7 +24,13 @@ def _process_weather(ti):
     humidity = info["data"][0]["humidity"]
     cloudiness = info["data"][0]["clouds"]
     wind_speed = info["data"][0]["wind_speed"]
-    return (timestamp, temp, humidity, cloudiness, wind_speed)
+    return {
+            "time": timestamp,
+            "temp": temp,
+            "humidity": humidity,
+            "cloudiness": cloudiness,
+            "wind_speed": wind_speed
+            }
 
 with DAG(
     dag_id="weather_dag",
@@ -75,11 +81,11 @@ with DAG(
         postgres_conn_id="wather_conn",
         sql="""
             INSERT INTO measures2 (timestamp, temp, humidity, cloudiness, wind_speed, city) VALUES
-            (to_timestamp({{ti.xcom_pull(task_ids='process_weather_data')[0]}}),
-            {{ti.xcom_pull(task_ids='process_weather_data')[1]}}, 
-            {{ti.xcom_pull(task_ids='process_weather_data')[2]}},
-            {{ti.xcom_pull(task_ids='process_weather_data')[3]}},
-            {{ti.xcom_pull(task_ids='process_weather_data')[4]}},
+            (to_timestamp({{ti.xcom_pull(task_ids='process_weather_data')["time"]}}),
+            {{ti.xcom_pull(task_ids='process_weather_data')["temp"]}}, 
+            {{ti.xcom_pull(task_ids='process_weather_data')["humidity"]}},
+            {{ti.xcom_pull(task_ids='process_weather_data')["cloudiness"]}},
+            {{ti.xcom_pull(task_ids='process_weather_data')["wind_speed"]}},
             'Lviv');
             """,
         )
